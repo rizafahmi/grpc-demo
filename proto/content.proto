@@ -1,0 +1,19 @@
+/* proto/content.proto */
+syntax = "proto3";
+
+package content;
+
+option go_package = "github.com/rizafahmi/grpc-demo";
+
+message NewContent {
+    string text = 1;
+}
+
+message Content {
+    int32 id = 1;
+    string text = 2;
+}
+
+service ContentManagement {
+    rpc CreateContent (NewContent) returns (Content);
+}
