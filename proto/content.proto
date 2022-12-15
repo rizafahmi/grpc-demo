@@ -16,4 +16,5 @@ message Content {
 
 service ContentManagement {
     rpc CreateContent (NewContent) returns (Content);
+    rpc CreateALotOfContents (stream NewContent) returns (stream Content);
 }

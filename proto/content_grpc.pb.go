@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ContentManagementClient interface {
 	CreateContent(ctx context.Context, in *NewContent, opts ...grpc.CallOption) (*Content, error)
+	CreateALotOfContents(ctx context.Context, opts ...grpc.CallOption) (ContentManagement_CreateALotOfContentsClient, error)
 }
 
 type contentManagementClient struct {
@@ -42,11 +43,43 @@ func (c *contentManagementClient) CreateContent(ctx context.Context, in *NewCont
 	return out, nil
 }
 
+func (c *contentManagementClient) CreateALotOfContents(ctx context.Context, opts ...grpc.CallOption) (ContentManagement_CreateALotOfContentsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ContentManagement_ServiceDesc.Streams[0], "/content.ContentManagement/CreateALotOfContents", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &contentManagementCreateALotOfContentsClient{stream}
+	return x, nil
+}
+
+type ContentManagement_CreateALotOfContentsClient interface {
+	Send(*NewContent) error
+	Recv() (*Content, error)
+	grpc.ClientStream
+}
+
+type contentManagementCreateALotOfContentsClient struct {
+	grpc.ClientStream
+}
+
+func (x *contentManagementCreateALotOfContentsClient) Send(m *NewContent) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *contentManagementCreateALotOfContentsClient) Recv() (*Content, error) {
+	m := new(Content)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ContentManagementServer is the server API for ContentManagement service.
 // All implementations must embed UnimplementedContentManagementServer
 // for forward compatibility
 type ContentManagementServer interface {
 	CreateContent(context.Context, *NewContent) (*Content, error)
+	CreateALotOfContents(ContentManagement_CreateALotOfContentsServer) error
 	mustEmbedUnimplementedContentManagementServer()
 }
 
@@ -56,6 +89,9 @@ type UnimplementedContentManagementServer struct {
 
 func (UnimplementedContentManagementServer) CreateContent(context.Context, *NewContent) (*Content, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateContent not implemented")
+}
+func (UnimplementedContentManagementServer) CreateALotOfContents(ContentManagement_CreateALotOfContentsServer) error {
+	return status.Errorf(codes.Unimplemented, "method CreateALotOfContents not implemented")
 }
 func (UnimplementedContentManagementServer) mustEmbedUnimplementedContentManagementServer() {}
 
@@ -88,6 +124,32 @@ func _ContentManagement_CreateContent_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContentManagement_CreateALotOfContents_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContentManagementServer).CreateALotOfContents(&contentManagementCreateALotOfContentsServer{stream})
+}
+
+type ContentManagement_CreateALotOfContentsServer interface {
+	Send(*Content) error
+	Recv() (*NewContent, error)
+	grpc.ServerStream
+}
+
+type contentManagementCreateALotOfContentsServer struct {
+	grpc.ServerStream
+}
+
+func (x *contentManagementCreateALotOfContentsServer) Send(m *Content) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *contentManagementCreateALotOfContentsServer) Recv() (*NewContent, error) {
+	m := new(NewContent)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ContentManagement_ServiceDesc is the grpc.ServiceDesc for ContentManagement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +162,13 @@ var ContentManagement_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ContentManagement_CreateContent_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "CreateALotOfContents",
+			Handler:       _ContentManagement_CreateALotOfContents_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/content.proto",
 }

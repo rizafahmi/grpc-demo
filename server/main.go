@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"math/rand"
 	"net"
@@ -23,6 +24,25 @@ func (s *ContentManagementServer) CreateContent(ctx context.Context, input *pb.N
 	var content_id int32 = int32(rand.Intn(1000))
 
 	return &pb.Content{Text: input.GetText(), Id: content_id}, nil
+}
+
+func (s *ContentManagementServer) CreateALotOfContents(stream pb.ContentManagement_CreateALotOfContentsServer) error {
+	for {
+		content, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		log.Printf("Receive from client 🌊 Text: %v", content.GetText())
+
+		var content_id int32 = int32(rand.Intn(1000))
+		err = stream.Send(&pb.Content{Text: content.GetText(), Id: content_id})
+		if err != nil {
+			return err
+		}
+	}
 }
 
 func main() {
